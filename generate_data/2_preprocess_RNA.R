@@ -27,8 +27,8 @@ rna.names = gsub("/.*","",names)
 rna.names = gsub("T$|TI$|TI.*$","",rna.names)
 
 #??! there should be 41 but there are 34
-fn = fn[rna.names %in% df$HMFsampleID]
-df = df[df$HMFsampleID %in% rna.names, ]
+fn = fn[rna.names %in% df$CPCT_WIDE_CORE]
+df = df[df$CPCT_WIDE_CORE %in% rna.names, ]
 
 #read gene data
 ls = lapply(fn, function(x) {

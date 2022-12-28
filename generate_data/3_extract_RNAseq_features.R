@@ -38,7 +38,7 @@ rna.df = fread("/home/l.leek/data/pembro/pembro_RNAseq_normalized_cts.tsv", data
 colnames(rna.df)
 
 clin.df = fread("data/pembro/20221021_DRUP_pembro_LL_final_1_WGS.tsv", data.table = F)
-clin.df$patientID = paste0("ID_",gsub("CPCT0|DRUP0|WIDE0|CORELR0|COREDB0","",clin.df$HMFsampleID))
+clin.df$patientID = paste0("ID_",gsub("CPCT0|DRUP0|WIDE0|CORELR0|COREDB0","",clin.df$CPCT_WIDE_CORE))
 clin.df = clin.df[clin.df$patientID %in% colnames(rna.df), ]
 
 #check whether all RNA can be found in clin.df
@@ -360,9 +360,9 @@ clin.df$rna_combiTmlTil[clin.df$wgs_tml_bool == 0 & clin.df$rna_sig_INTERFERON_G
 
 
 new_cols = colnames(clin.df)[str_detect(colnames(clin.df), pattern = "rna")]
-final.df = clin.df %>% dplyr::select(HMFsampleID, new_cols)
+final.df = clin.df %>% dplyr::select(CPCT_WIDE_CORE, new_cols)
 raw.df = fread('data/pembro/20221021_DRUP_pembro_LL_final_1_WGS.tsv')
-df = join(raw.df, final.df, by = "HMFsampleID")
+df = join(raw.df, final.df, by = "CPCT_WIDE_CORE")
 
 #Save output
 write.table(df, file='data/pembro/20221021_DRUP_pembro_LL_final_2_WGS_RNA.tsv', 

@@ -25,19 +25,43 @@ hmf_raw.fn = list.files(path = "/DATA/share/Voesties/data/HMF/update_10/somatics
                          pattern = ".purple.purity.tsv$",
                          full.names = TRUE,
                          recursive = TRUE)
-hmf_raw_names.fn = list.files(path = "/DATA/share/Voesties/data/HMF/update_10/somatics/",
+hmf_raw_names.fn = list.files(path = "/DATA/share/Voesties/data/HMF/update_10/somatics",
                               pattern = ".purple.purity.tsv$",
                               full.names = F,
                               recursive = TRUE)
+
 hmf_raw_names = gsub("/.*","",hmf_raw_names.fn)
 hmf.id = gsub("T$|TI$|TI.*$","",hmf_raw_names)
-hmf_drup.id = hmf.id[hmf.id %in% clin.df$HMFsampleID]
+hmf_drup.id = hmf.id[hmf.id %in% clin.df$CPCT_WIDE_CORE]
 
 #Filter WGS data from HMF database for which clinical data is available 
 hmf_drup.fn = hmf_raw.fn[hmf.id %in% hmf_drup.id]
 
 #remove the later biopsy from the same patient
-final.fn = hmf_drup.fn[hmf_drup.fn != "/DATA/share/Voesties/data/HMF/update_10/somatics/CPCT02010359TII/purple/CPCT02010359TII.purple.purity.tsv"]
+hmf_drup.fn = hmf_drup.fn[hmf_drup.fn != "/DATA/share/Voesties/data/HMF/update_10/somatics/CPCT02010359TII/purple/CPCT02010359TII.purple.purity.tsv"]
+
+
+#Load DRUP data to find missing samples
+drup_raw.fn = list.files(path = "/DATA/share/Voesties/data/DRUP/update_3/somatics",
+                               pattern = ".purple.purity.tsv$",
+                               full.names = T,
+                               recursive = TRUE)
+drup_raw_names.fn = list.files(path = "/DATA/share/Voesties/data/DRUP/update_3/somatics",
+                               pattern = ".purple.purity.tsv$",
+                               full.names = F,
+                               recursive = TRUE)
+drup_raw_names = gsub("/.*","",drup_raw_names.fn)
+drup.id = gsub("T$|TI$|TI.*$","",drup_raw_names)
+
+#Missing IDs (CPCT_WIDE_CORE style)
+missing_drup_CPCT_WIDE_CORE.id = clin.df$CPCT_WIDE_CORE[!clin.df$CPCT_WIDE_CORE %in% hmf_drup.id]
+#Find matching DRUP IDs (DRUP style)
+missing.df = clin.df[clin.df$CPCT_WIDE_CORE %in% missing_drup_CPCT_WIDE_CORE.id, ]
+drup_drup.fn = drup_raw.fn[drup.id %in% missing.df$HMFsampleID]
+
+
+#Merge
+final.fn = c(hmf_drup.fn, drup_drup.fn)
 
 #' ###########################################################################
 #' ###########################################################################
@@ -93,7 +117,7 @@ purple.df = as.data.frame(lapply(purple.df,as.numeric))
 
 
 # Add cols of WGS info to clinical file according to patientID
-clin.df$patientID = gsub('\\D+','', clin.df$HMFsampleID)
+clin.df$patientID = gsub('\\D+','', clin.df$CPCT_WIDE_CORE)
 clin.df$patientID = as.integer(gsub("^0","",clin.df$patientID))
 
 #MERGE
@@ -114,7 +138,7 @@ mutSig.df$wgs_uv_sum = rowSums(mutSig.df[ ,c("wgs_SBS7a",
                                              "wgs_SBS7c", 
                                              "wgs_SBS7d")])
 #merge
-final.df = inner_join(final.df, mutSig.df, by = c("HMFsampleID"="patientID"), keep =F)
+final.df = inner_join(final.df, mutSig.df, by = c("CPCT_WIDE_CORE"="patientID"), keep =F)
 
 
 #Threshold UV sig
@@ -150,7 +174,7 @@ final.df= final.df %>% dplyr::select(-c("Cohort","TumorType",
                        "MutationalLoad","Start","End",                           
                        "PretreatmentBiopsy","RNA","DNA","patientID"    ))
 raw.df = fread('data/pembro/20221021_DRUP_pembro_LL_final.tsv')
-df = join(raw.df, final.df, by = "HMFsampleID")
+df = join(raw.df, final.df, by = "CPCT_WIDE_CORE")
 
 #Save output
 write.table(df, file='data/pembro/20221021_DRUP_pembro_LL_final_1_WGS.tsv', 
