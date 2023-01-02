@@ -61,8 +61,6 @@ process_purplefiles <- function(df){
 
 
 
-
-
 my_cosmicsignatures <-function(df) {
   df %>% 
     mutate(sample_id = gsub("T$","", sample_id)) %>% 
@@ -124,6 +122,80 @@ my_GOI_driverMut_pp <- function(df, driverLikelihood_thres, GOI, patientIDs){
   driverMut_pp.df = my_driverMut_pp(df, driverLikelihood_thres)
   GOI_driverMut_pp.df = process_genes_to_dummy(driverMut_pp.df, GOI, patientIDs)
   return(GOI_driverMut_pp.df)
+}
+
+
+
+
+
+
+
+
+
+
+read_anno_vcf_files <- function(fn) {
+  lapply(fn, function(x) {
+    df = read.table(file = x, sep = '\t', header = TRUE, stringsAsFactors = TRUE) %>% 
+      mutate(CHROMPOS = paste0(CHROM, "_", POS)) %>%          #counts as 1 mut
+      dplyr::filter(FILTER == "PASS") %>%                     #filter on quality 
+      dplyr::filter(EFF....IMPACT %in% c("MODERATE","HIGH")) %>%   #filter on nonsyn 
+      rename_with(~ gsub("EFF....", "", .x, fixed = TRUE)) %>% 
+      dplyr::select(CHROMPOS, GENE, FILTER, IMPACT, EFFECT, BIOTYPE)
+    return(df)})
+}
+
+
+read_clonal_vcf_files <- function(fn) {
+  lapply(fn, function(x) {
+    df = as.data.frame(getFIX(read.vcfR(x, verbose = FALSE), getINFO = T)) %>% 
+      mutate(CHROMPOS = paste0(CHROM, "_", POS)) %>%    #counts as 1 mut
+      mutate(SUBCL = gsub(".*;SUBCL=|;.*","",INFO)) %>% #extract subclonality info
+      filter(FILTER == "PASS") %>%                      #filter on quality 
+      dplyr::select(CHROMPOS, SUBCL)                    #speed up by rm info
+    return(df)})
+  
+}
+
+
+get_TML_cTML <- function(nonsyn.ls, clonal.ls) {
+  
+  df = as.data.frame(matrix(rep(NA, 0), nrow = 0, ncol = 3))
+  colnames(df) = c("patientID","TML_SNPeff","cTML")
+  for(i in names(nonsyn.ls)){
+    print(i)
+    
+    TML = length(unique(nonsyn.ls[[i]]$CHROMPOS))
+    
+    clonal_muts = clonal.ls[[i]]$CHROMPOS[as.numeric(clonal.ls[[i]]$SUBCL) < 0.05]
+    clonal_nonsyn.df = nonsyn.ls[[i]] %>% 
+      dplyr::filter(CHROMPOS %in% clonal_muts)
+    cTML = length(unique(clonal_nonsyn.df$CHROMPOS))
+    
+    patientID = gsub("T$|TI$|TI.*$","",i)
+    
+    new_row = c(patientID, as.integer(TML), as.integer(cTML))
+    df[nrow(df) + 1, ] = new_row
+  }
+  return(df)
+}
+
+my_clonal_dataframe <- function(fn) {
+  
+  print("Reading all SNPeff annotated files and filtering for nonsyn")
+  nonsyn.ls = read_anno_vcf_files(fn$anno)
+  names(nonsyn.ls) = fn$names
+
+  print("Extracting clonal information per mutation. This might take a while.")  
+  clonal.ls = read_clonal_vcf_files(fn$clonal)
+  names(clonal.ls) = fn$names
+  
+  print("Select clonal nonsyn mutations")
+  final.df = get_TML_cTML(nonsyn.ls, clonal.ls)
+  final.df[c("TML_SNPeff", "cTML")] = sapply(final.df[c("TML_SNPeff", "cTML")],as.numeric)
+  final.df$perc_clon = round((final.df$cTML / final.df$TML_SNPeff ) * 100,1)
+  
+  
+  return(final.df)
 }
 
 

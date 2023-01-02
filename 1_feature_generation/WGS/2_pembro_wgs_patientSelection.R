@@ -6,7 +6,7 @@ setwd(dir)
 
 clin.df = fread("data/20221021_DRUP_pembro_LL_final.tsv", data.table = F)
 
-select_fn <- function(extension){
+select_fn_somatics <- function(extension){
   # Filenames of available PURPLE files (WGS)
   hmf_raw.fn = list.files(path = "/DATA/share/Voesties/data/HMF/update_10/somatics",
                           pattern = paste0(extension,"$"),
@@ -58,9 +58,34 @@ select_fn <- function(extension){
   return(final.df)
 }
 
-purplepurity_fn.df = select_fn(extension = ".purple.purity.tsv")
-drivercatalog_fn.df = select_fn(extension = ".driver.catalog.tsv")
-somatic_fn.df = select_fn(extension = "somatic.vcf.gz")
+select_fn_snpeff <- function(extension, extension2){
+  
+  clonal = list.files(path = "/home/l.leek/pembro/data/snpeff_output",
+                          pattern = "_ann.vcf",
+                          full.names = TRUE,
+                          recursive = TRUE)
+  
+  anno = list.files(path = "/home/l.leek/pembro/data/snpeff_output",
+                  pattern = "_ann_filt_oneLine.vcf",
+                  full.names = TRUE,
+                  recursive = TRUE)
+  
+  names = gsub(".*\\/|_ann.vcf|_ann_filt_oneLine.vcf", "", clonal)
+  final.df = data.frame(cbind(names = names, 
+                              clonal = clonal,
+                              anno = anno))
+  
+  return(final.df)
+}
+
+
+
+purplepurity_fn.df = select_fn_somatics(extension = ".purple.purity.tsv")
+drivercatalog_fn.df = select_fn_somatics(extension = ".driver.catalog.tsv")
+somatic_fn.df = select_fn_somatics(extension = "somatic.vcf.gz")
+ann_vcf.df = select_fn_snpeff(extension = "_ann.vcf",
+                              extension2 = "_ann_filt_oneLine.vcf")
+
 
 #export
 write.table(purplepurity_fn.df, file = ("data/pembro_wgs_patientSelection_purplepurity.tsv"), 
@@ -69,11 +94,11 @@ write.table(purplepurity_fn.df, file = ("data/pembro_wgs_patientSelection_purple
 write.table(drivercatalog_fn.df, file = ("data/pembro_wgs_patientSelection_drivercatalog.tsv"), 
             quote=TRUE, sep='\t', col.names = T, row.names = F)
 
+write.table(somatic_fn.df$names, file = ("data/pembro_wgs_patientSelection_somatic.txt"),  
+            quote=F, sep='\n', col.names = F, row.names = F)     
 
-write.table(somatic_fn.df$names, file = ("data/pembro_wgs_patientSelection_somatic.txt"), 
-            quote=F, sep='\n', col.names = F, row.names = F)
-
-
+write.table(ann_vcf.df, file = ("data/pembro_wgs_patientSelection_ann_vcf.txt"),
+            quote=F, sep='\t', col.names = T, row.names = F)
 
 
 
