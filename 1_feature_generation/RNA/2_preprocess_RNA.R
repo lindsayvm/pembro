@@ -5,6 +5,9 @@ library(dplyr)
 # devtools::install_github("stephenturner/annotables")
 library(annotables)
 
+dir = "/home/l.leek/pembro"
+setwd(dir)
+
 #' ###########################################################################
 #' ###########################################################################
 #' Input:  
@@ -12,7 +15,7 @@ library(annotables)
 #' ###########################################################################
 
 #Load data
-df = fread("data/pembro/20221021_DRUP_pembro_LL_final_1_WGS.tsv", data.table = F)
+df = fread("data/20221021_DRUP_pembro_LL_final.tsv", data.table = F)
 
 #Load RNAseq all of HMF
 extension = "-featurecounts.txt.gz"
@@ -21,14 +24,18 @@ fn = list.files("/DATA/share/Voesties/data/resources/rnaseq/results/quantificati
                 pattern = extension, recursive = T, full.names = T)
 names = list.files("/DATA/share/Voesties/data/resources/rnaseq/results/quantification", 
                         pattern = extension, recursive = T, full.names = F)
-
 #match RNAseq with data
 rna.names = gsub("/.*","",names)
 rna.names = gsub("T$|TI$|TI.*$","",rna.names)
 
-#??! there should be 41 but there are 34
-fn = fn[rna.names %in% df$CPCT_WIDE_CORE]
-df = df[df$CPCT_WIDE_CORE %in% rna.names, ]
+PATIENTS = unique(c(df$CPCT_WIDE_CORE, df$HMFsampleID))
+PATIENTS = rna.names[rna.names %in% PATIENTS]
+fn = fn[rna.names %in% PATIENTS]
+
+# df1 = df[df$CPCT_WIDE_CORE %in% PATIENTS, ]
+# df2 = df[df$HMFsampleID %in% PATIENTS, ]
+# df = rbind(df1, df2)
+# #
 
 #read gene data
 ls = lapply(fn, function(x) {
@@ -45,7 +52,7 @@ ls = lapply(fn, function(x) {
   return(df)
 })
 #Retrieve IDs
-names(ls) = gsub('\\D+|CPCT0|DRUP0', "", gsub(pattern = paste(".*\\/|",extension), "", fn))
+names(ls) = gsub(pattern = ".*\\/|T-featurecounts.txt.gz", "", fn)
 
 #check whether rownames are same
 df1=ls[[1]]
@@ -74,8 +81,8 @@ rna.df = rna.df %>%
   filter(GeneId != "") #not all missing values are reported as NA therefore empty ""
 
 write.table(x = as.data.frame(rna.df),
-            file = "/home/l.leek/data/pembro/pembro_RNAseq_raw_cts.tsv",
-            sep = "\t", quote = F,na = "NA")
+            file = "data/pembro_RNAseq_raw_cts.tsv",
+            sep = "\t", quote = F,na = "NA", row.names = FALSE))
 
 
 ###########
@@ -101,8 +108,7 @@ cpm_normalized.df = log10(cpm.df +1)
 cpm_normalized_filtered.df = cpm_normalized.df[-drop, ] 
 
 final.df = as.data.frame(dplyr::as_tibble(cpm_normalized_filtered.df, rownames = "gene"))
-colnames(final.df)[-1] = paste0("ID_", colnames(final.df)[-1])
 
 write.table(x = as.data.frame(final.df),
-            file = "/home/l.leek/data/pembro/pembro_RNAseq_normalized_cts.tsv",
+            file = "data/pembro_RNAseq_normalized_cts.tsv",
             sep = "\t", quote = F,na = "NA", row.names = FALSE)

@@ -23,7 +23,6 @@ GOI = c("PIK3CA", "PTEN", "KRAS", "BRAF", "NRAS", "ARID1A",
 
 
 #download data
-clin.df = fread(path_clinical_data, data.table = F)
 cosmicSigs.df = fread(path_cosmicSigs, data.table = F)
 
 #read paths to data
@@ -41,6 +40,7 @@ purple.df = process_purplefiles(df = purple.df)
 cosmicSigs.df = my_cosmicsignatures(df = cosmicSigs.df) %>% 
                     dplyr::select(matches("sample_id|SBS6|SBS6|SBS15|SBS26|SBS_7|SBS_10")) %>% 
                     dplyr::filter(sample_id %in% purple.df$patientID) # there is info on samples that are not sequenced
+#clin.df = fread(path_clinical_data, data.table = F)
 ####drup_cosmicSigs.df = cosmicSigs.df[cosmicSigs.df$sample_id %in% c(clin.df$CPCT_WIDE_CORE, clin.df$HMFsampleID), ]
 
 #get driver mutations for genes of interest per patient
