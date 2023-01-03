@@ -120,21 +120,46 @@ my_stacked <- function(df, var){
   return(p)
 }
 
+my_stacked_BOR <- function(df, var){
+  df = df %>% 
+    mutate(value = rep(1, nrow(df))) %>% 
+    mutate(BOR = factor(BOR, levels = c("PR" , "SD", "PD") )) %>% 
+    dplyr::select(all_of(var), BOR, value) %>% 
+    na.omit() 
+  p = df %>% ggplot( aes(fill=BOR, y=value, x=df[[var]])) +
+    geom_bar(position="stack", stat="identity") +
+    scale_fill_manual(values = c("olivedrab", "dodgerblue","orange2" )) +
+    theme_bw(base_size = 12)+
+    theme(legend.position = "right",
+          axis.text.x = element_text(size = 12, angle = 33, vjust = 1, hjust=1),
+          axis.title.y=element_blank())
+  return(p)
+}
+
 get_fisher_pval <- function(df, var){
   #Contingency table
-  cont.df = plyr::count(df %>%  na.omit(), c(var,"responders"))
+  df = df %>%  dplyr::select(var, responders) %>%  na.omit()
+  cont.df = plyr::count(df , c(var,"responders"))
+  
+  low_r = cont.df$freq[cont.df[[var]] %in% c("LOW",0) & cont.df$responders == "R"]
+  if(length(low_r) == 0 ){low_r= 0}
+  low_nr = cont.df$freq[cont.df[[var]] %in% c("LOW",0) & cont.df$responders == "NR"]
+  if(length(low_nr) == 0 ){low_nr= 0}
+  high_r = cont.df$freq[cont.df[[var]] %in% c("HIGH",1) & cont.df$responders == "R"]
+  if(length(high_r) == 0 ){high_r= 0}
+  high_nr = cont.df$freq[cont.df[[var]] %in% c("HIGH",1) & cont.df$responders == "NR"]
+  if(length(high_nr) == 0 ){high_nr= 0}
   
   #contingency table as data
   dat = data.frame(
-    "LOW" = c(cont.df$freq[cont.df[[var]] == "LOW" & cont.df$responders == "R"], 
-              cont.df$freq[cont.df[[var]] == "LOW" & cont.df$responders == "NR"]),
-    "HIGH" = c(cont.df$freq[cont.df[[var]] == "HIGH" & cont.df$responders == "R"], 
-               cont.df$freq[cont.df[[var]] == "HIGH" & cont.df$responders == "NR"]),
+    "LOW" = c(low_r, 
+              low_nr),
+    "HIGH" = c(high_r, 
+               high_nr),
     row.names = c("R", "NR"),
     stringsAsFactors = FALSE
   )
   dat = as.matrix(dat)
-  
   #Fisher
   test = fisher.test(dat)
   pval = test$p.value

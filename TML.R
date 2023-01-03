@@ -26,13 +26,18 @@ tml_cohort140_290.p = my_stacked(df %>% dplyr::filter(Cohort != "Pembro HML>290"
 tml_cohort290.p = my_stacked(df %>% dplyr::filter(Cohort == "Pembro HML>290"), "TML_bool") +
   xlab("TML: Cohort 140-290")
 
-tmb_all.p+tmb_cohort140_290.p + tmb_cohort290.p
-get_fisher_pval(df, "TMB_bool")
+
+
 tmb_all.p+tmb_cohort140_290.p + tmb_cohort290.p + 
 tml_all.p+tml_cohort140_290.p + tml_cohort290.p +
   plot_layout(ncol = 3)
+get_fisher_pval(df, "TMB_bool")
 get_fisher_pval(df, "TML_bool") #0.368
 
+#####################
+tml_all_BOR.p = my_stacked_BOR(df , "TML_bool") +
+  xlab("TML: Complete cohort")
+######???????????
 #####################
 
 
@@ -50,6 +55,8 @@ tml_cohort_BC.p = my_stacked(df %>% dplyr::filter(TumorType == "Breast cancer"),
   xlab("TML: Cohort BC")
 tml_cohort_noBC.p = my_stacked(df %>% dplyr::filter(TumorType != "Breast cancer"), "TML_bool") +
   xlab("TML: Cohort pan-cancer")
+
+
 
 tmb_all.p + tmb_cohort_BC.p + tmb_cohort_noBC.p + 
 tml_all.p + tml_cohort_BC.p + tml_cohort_noBC.p + 
