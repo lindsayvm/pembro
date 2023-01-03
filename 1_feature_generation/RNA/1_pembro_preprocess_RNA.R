@@ -82,7 +82,7 @@ rna.df = rna.df %>%
 
 write.table(x = as.data.frame(rna.df),
             file = "data/pembro_RNAseq_raw_cts.tsv",
-            sep = "\t", quote = F,na = "NA", row.names = FALSE))
+            sep = "\t", quote = F,na = "NA", row.names = FALSE)
 
 
 ###########

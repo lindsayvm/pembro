@@ -51,9 +51,7 @@ my_barplot <- function(df, inputCol, sort=F) {
 
 
 my_heatmap <- function(clin.df, var.df, var.m, survivalCol) {
-  (clin.df$patientID)
-  colnames(var.df)[-1]
-  my_group = as.factor(clin.df[[survivalCol]]) #blue is clinical benefit
+  my_group = as.factor(clin.df[[survivalCol]]) 
   colSide = brewer.pal(length(unique(my_group)), "Set1")[my_group]
   heatmap(var.m,
           Colv = TRUE,
@@ -62,8 +60,6 @@ my_heatmap <- function(clin.df, var.df, var.m, survivalCol) {
           labCol = NA,
           ColSideColors=colSide)
 }
-
-
 
 my_heatmap2 <- function(clin.df, var.m, survivalCol) {
   my_group = as.factor(clin.df[[survivalCol]]) #blue is clinical benefit

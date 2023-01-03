@@ -53,6 +53,9 @@ clin.df$CPCT_WIDE_CORE = gsub("T$","",clin.df$CPCT_WIDE_CORE)
 
 clin.df$BOR[clin.df$TumorType == "CUP"]
 
+clin.df$HMFsampleID[clin.df$HMFsampleID == "No blood"] = NA
+
+
 #' ###########################################################################
 #' ###########################################################################
 #' Output:  
