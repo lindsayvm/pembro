@@ -73,17 +73,73 @@ my_heatmap2 <- function(clin.df, var.m, survivalCol) {
 
 
 
+my_wilcoxon <- function(df, VAR){
+  
+  df$responders = factor(df$responders, levels = c("R","NR"))
+  df = df[!is.na(df[[VAR]]), ]
+  
+  wilc.test = pairwise.wilcox.test(df[[VAR]], df$responders,
+                                   p.adjust.method="none")
+  pvalue = data.frame(signif(wilc.test$p.value,2))
+
+  p = df %>%  ggplot( aes(x=responders, 
+                          y=df[[VAR]], 
+                          fill=responders)) +
+    geom_boxplot(outlier.shape = 18, width = 0.6) +
+    scale_fill_manual(values = c("skyblue", "orange")) +
+    geom_jitter(color="black", size=0.5, alpha=0.3, width = 0.2) +
+    ylab(VAR) +
+    theme_bw(base_size = 15)+
+    theme(legend.position = "None",
+          #        axis.text.x = element_text(size = 16, angle = 45, vjust = 1.5, hjust=0.5),
+          axis.text.x = element_text(size = 17, angle = 0, vjust = 1, hjust=1),
+          axis.text.y = element_text(size = 12, angle = 0, vjust = 1, hjust=1),
+          axis.title.x = element_blank(),
+          axis.ticks = element_blank()) +
+    geom_text(data = pvalue,
+            aes(x = 1.5, y = max(df[[VAR]], na.rm = T) , label = paste0("pval=",pvalue)),  
+            inherit.aes = FALSE, hjust = "inward", vjust = "inward", size = 3.5) 
+  
+  return(p)
+}  #
 
 
+my_stacked <- function(df, var){
+  df = df %>% 
+    mutate(value = rep(1, nrow(df))) %>% 
+    mutate(responders = factor(responders, levels = c("R","NR") )) %>% 
+    dplyr::select(all_of(var), responders, value) %>% 
+    na.omit() 
+  p = df %>% ggplot( aes(fill=responders, y=value, x=df[[var]])) +
+    geom_bar(position="stack", stat="identity") +
+    scale_fill_manual(values = c("skyblue", "orange")) +
+    theme_bw(base_size = 12)+
+    theme(legend.position = "None",
+          axis.text.x = element_text(size = 12, angle = 33, vjust = 1, hjust=1),
+          axis.title.y=element_blank())
+  return(p)
+}
 
-
-
-
-
-
-
-
-
+get_fisher_pval <- function(df, var){
+  #Contingency table
+  cont.df = plyr::count(df %>%  na.omit(), c(var,"responders"))
+  
+  #contingency table as data
+  dat = data.frame(
+    "LOW" = c(cont.df$freq[cont.df[[var]] == "LOW" & cont.df$responders == "R"], 
+              cont.df$freq[cont.df[[var]] == "LOW" & cont.df$responders == "NR"]),
+    "HIGH" = c(cont.df$freq[cont.df[[var]] == "HIGH" & cont.df$responders == "R"], 
+               cont.df$freq[cont.df[[var]] == "HIGH" & cont.df$responders == "NR"]),
+    row.names = c("R", "NR"),
+    stringsAsFactors = FALSE
+  )
+  dat = as.matrix(dat)
+  
+  #Fisher
+  test = fisher.test(dat)
+  pval = test$p.value
+  return(pval)
+}
 
 
 

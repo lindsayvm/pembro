@@ -1,6 +1,12 @@
+#libraries
 library(data.table)
 
+#env
+dir = "/home/l.leek/pembro/"
+setwd(dir)
 
+
+#laod data
 clin.df = fread('data/20221021_DRUP_pembro_LL_final.tsv', data.table = F)
 
 wgs.df = fread('data/pembro_wgs_features.csv', data.table = F)
@@ -18,11 +24,17 @@ clin.df$RNA_ID[clin.df$HMFsampleID %in% rna.df$patientID] = clin.df$HMFsampleID[
 setequal(rna.df$patientID, rna.df$patientID[rna.df$patientID %in% clin.df$RNA_ID])
 
 
+#merge data
 merge.df = full_join(clin.df, wgs.df, by=c('WGS_ID'='patientID'))
 final.df = full_join(merge.df, rna.df, by=c('RNA_ID'='patientID'))
 
 
+#which samples are missing but should be there?
+missing_samples.df = final.df %>%  dplyr::select(RNA, DNA, WGS_ID, RNA_ID, CPCT_WIDE_CORE, HMFsampleID)
 
-clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv", data.table = F)
 
+
+#write data
+write.table(x = final.df, file = "data/20221021_DRUP_pembro_LL_WGS_RNA.tsv", 
+                      quote = F, sep = '\t', col.names = T, row.names = F)
 

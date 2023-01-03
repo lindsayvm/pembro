@@ -28,6 +28,8 @@ names = list.files("/DATA/share/Voesties/data/resources/rnaseq/results/quantific
 rna.names = gsub("/.*","",names)
 rna.names = gsub("T$|TI$|TI.*$","",rna.names)
 
+#because we dont know if names are used from CPCT_WIDE_CORE or HMFsampleID we use both. Some patients are submitted under both names I guess which is why we get 66 in total. (32 form CPCT... and 34 from HMF...)
+#its not thatttt many patients, so for now just run on all and select later for which one we want the features. 
 PATIENTS = unique(c(df$CPCT_WIDE_CORE, df$HMFsampleID))
 PATIENTS = rna.names[rna.names %in% PATIENTS]
 fn = fn[rna.names %in% PATIENTS]

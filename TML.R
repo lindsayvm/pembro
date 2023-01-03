@@ -1,0 +1,90 @@
+library(patchwork)
+library(data.table)
+#env
+dir = "/home/l.leek/pembro/"
+setwd(dir)
+source("src/functions_plots.R")
+
+
+df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv")
+
+
+# TMB high low and response/no response
+tmb_all.p = my_stacked(df , "TMB_bool") +
+  xlab("TMB: Complete cohort")
+tmb_cohort140_290.p = my_stacked(df %>% dplyr::filter(Cohort != "Pembro HML>290"), "TMB_bool")  +
+  xlab("TMB: Cohort >290")
+tmb_cohort290.p = my_stacked(df %>% dplyr::filter(Cohort == "Pembro HML>290"), "TMB_bool") +
+  xlab("TMB: Cohort 140-290")
+
+
+# TML high low and response/no response
+tml_all.p = my_stacked(df , "TML_bool") +
+  xlab("TML: Complete cohort")
+tml_cohort140_290.p = my_stacked(df %>% dplyr::filter(Cohort != "Pembro HML>290"), "TML_bool")  +
+  xlab("TML: Cohort >290")
+tml_cohort290.p = my_stacked(df %>% dplyr::filter(Cohort == "Pembro HML>290"), "TML_bool") +
+  xlab("TML: Cohort 140-290")
+
+tmb_all.p+tmb_cohort140_290.p + tmb_cohort290.p
+get_fisher_pval(df, "TMB_bool")
+tmb_all.p+tmb_cohort140_290.p + tmb_cohort290.p + 
+tml_all.p+tml_cohort140_290.p + tml_cohort290.p +
+  plot_layout(ncol = 3)
+get_fisher_pval(df, "TML_bool") #0.368
+
+#####################
+
+
+# TMB high low and response/no response
+tmb_all.p = my_stacked(df , "TMB_bool") +
+  xlab("TMB: Complete cohort")
+tmb_cohort_BC.p = my_stacked(df %>% dplyr::filter(TumorType == "Breast cancer"), "TMB_bool")  +
+  xlab("TMB: Cohort BC")
+tmb_cohort_noBC.p = my_stacked(df %>% dplyr::filter(TumorType != "Breast cancer"), "TMB_bool") +
+  xlab("TMB: Cohort pan-cancer")
+
+tml_all.p = my_stacked(df , "TML_bool") +
+  xlab("TML: Complete cohort")
+tml_cohort_BC.p = my_stacked(df %>% dplyr::filter(TumorType == "Breast cancer"), "TML_bool")  +
+  xlab("TML: Cohort BC")
+tml_cohort_noBC.p = my_stacked(df %>% dplyr::filter(TumorType != "Breast cancer"), "TML_bool") +
+  xlab("TML: Cohort pan-cancer")
+
+tmb_all.p + tmb_cohort_BC.p + tmb_cohort_noBC.p + 
+tml_all.p + tml_cohort_BC.p + tml_cohort_noBC.p + 
+  plot_layout(ncol = 3)
+
+#####################
+TML_SNPeff.p = my_wilcoxon(df, "TML_SNPeff")+
+  ylim(0,3300)
+TML_purple.p = my_wilcoxon(df, "TML")+
+  ylim(0,3300)
+TML_clin.p = my_wilcoxon(df, "MutationalLoad")+
+  ylim(0,3300)
+#####################
+TML_SNPeff_290.p = my_wilcoxon(df %>% dplyr::filter(TML_SNPeff >= 290), "TML_SNPeff")+
+  ylim(290,3300)
+TML_purple_290.p = my_wilcoxon(df %>% dplyr::filter(TML >= 290), "TML")+
+  ylim(290,3300)
+TML_clin_290.p = my_wilcoxon(df %>% dplyr::filter(MutationalLoad >= 290), "MutationalLoad")+
+  ylim(290,3300)
+#####################
+TML_SNPeff_140_290.p = my_wilcoxon(df %>% dplyr::filter(TML_SNPeff < 290 & TML_SNPeff >= 140 ), "TML_SNPeff")+
+  ylim(100,290)
+TML_purple_140_290.p = my_wilcoxon(df %>% dplyr::filter(TML_SNPeff < 290 & TML_SNPeff >= 140 ), "TML")+
+  ylim(100,290)
+TML_clin_140_290.p = my_wilcoxon(df %>% dplyr::filter(TML_SNPeff < 290 & TML_SNPeff >= 140 ), "MutationalLoad")+
+  ylim(100,290)
+
+
+
+#### Final plot
+TML_clin.p + TML_purple.p + TML_SNPeff.p +
+  TML_clin_290.p + TML_purple_290.p + TML_SNPeff_290.p +
+  TML_clin_140_290.p + TML_purple_140_290.p + TML_SNPeff_140_290.p +
+  plot_layout(ncol = 3)
+
+
+
+
