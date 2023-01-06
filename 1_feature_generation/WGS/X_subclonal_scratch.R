@@ -40,10 +40,10 @@ ann_filt_vcf.df = ann_vcf_raw.df %>%
 summary(as.numeric(ann_filt_vcf.df$SUBCL)) #between 0 & 1
 head(ann_filt_vcf.df)
 
-
+oneline_vcf.df = fread("~/workspace/snpEff/data/pembro/test_ann_filt_oneLine.vcf")
 oneline_vcf.df = fread("/home/l.leek/pembro/data/snpeff_output/CPCT02080234T_ann_filt_oneLine.vcf")
 #should be between 0 and 1, but max is 1.4089
-summary(oneline_vcf.df$PURPLE_AF)
+summary(oneline_vcf.df$SUBCL)
 
 
 #TML
@@ -133,7 +133,7 @@ print(length(unique(clonal_muts))) #370463
 oneline_vcf.df = fread("/home/l.leek/pembro/data/snpeff_output/CPCT02080234T_ann_filt_oneLine.vcf")
 
 #should be between 0 and 1, but max is 1.4089
-summary(oneline_vcf.df$PURPLE_AF)
+summary(oneline_vcf.df$SUBCL)
 
 #TML
 colnames(oneline_vcf.df) = gsub("EFF\\[\\*\\]\\.","", colnames(oneline_vcf.df))

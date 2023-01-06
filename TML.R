@@ -28,9 +28,10 @@ tml_cohort290.p = my_stacked(df %>% dplyr::filter(Cohort == "Pembro HML>290"), "
 
 
 
-tmb_all.p+tmb_cohort140_290.p + tmb_cohort290.p + 
-tml_all.p+tml_cohort140_290.p + tml_cohort290.p +
+tmb_all.p+ylab("# patients")+theme(axis.title.y=element_text(angle = 90))  + tmb_cohort140_290.p + tmb_cohort290.p+theme(legend.position = "right") + 
+tml_all.p + tml_cohort140_290.p + tml_cohort290.p +
   plot_layout(ncol = 3)
+
 get_fisher_pval(df, "TMB_bool")
 get_fisher_pval(df, "TML_bool") #0.368
 
@@ -57,8 +58,7 @@ tml_cohort_noBC.p = my_stacked(df %>% dplyr::filter(TumorType != "Breast cancer"
   xlab("TML: Cohort pan-cancer")
 
 
-
-tmb_all.p + tmb_cohort_BC.p + tmb_cohort_noBC.p + 
+tmb_all.p +ylab("# patients")+theme(axis.title.y=element_text(angle = 90))  + tmb_cohort_BC.p + tmb_cohort_noBC.p +theme(legend.position = "right") + 
 tml_all.p + tml_cohort_BC.p + tml_cohort_noBC.p + 
   plot_layout(ncol = 3)
 
@@ -89,9 +89,18 @@ TML_clin_140_290.p = my_wilcoxon(df %>% dplyr::filter(TML_SNPeff < 290 & TML_SNP
 #### Final plot
 TML_clin.p + TML_purple.p + TML_SNPeff.p +
   TML_clin_290.p + TML_purple_290.p + TML_SNPeff_290.p +
-  TML_clin_140_290.p + TML_purple_140_290.p + TML_SNPeff_140_290.p +
+  TML_clin_140_290.p +  TML_purple_140_290.p  + TML_SNPeff_140_290.p +
   plot_layout(ncol = 3)
 
 
+
+
+TML.p = my_wilcoxon(df, "TML")+
+  ylim(0,3300)
+TMB.p = my_wilcoxon(df, "TMB")+
+  ylim(0,200)
+SVL.p = my_wilcoxon(df , "svTumorMutationalBurden")+
+  ylim(0,1500)
+TML.p+ TMB.p + SVL.p 
 
 

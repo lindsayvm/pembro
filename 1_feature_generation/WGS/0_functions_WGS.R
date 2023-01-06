@@ -37,11 +37,7 @@ my_dataframe <- function(fn, extension) {
 }
 
 process_purplefiles <- function(df){
-  df = df %>% dplyr::select(patientID, 
-                            purity, 
-                            msIndelsPerMb, msStatus,
-                            tml, tmlStatus, tmbPerMb, tmbStatus, svTumorMutationalBurden) %>% 
-    
+  df = df %>% 
     dplyr::rename(MSI_bool = msStatus,
                   TML_bool = tmlStatus,
                   TMB_bool = tmbStatus,
