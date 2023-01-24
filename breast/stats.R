@@ -12,8 +12,8 @@ setwd(dir)
 source("src/functions_plots.R")
 
 
-clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv", data.table = F)
-
+clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv") %>% 
+  dplyr::filter(TumorType == "Breast cancer" )
 
 
 names1 = colnames(clin.df)[str_detect(colnames(clin.df),pattern = "rna_|gene|SBS")]
@@ -134,7 +134,9 @@ anova.p = my_anova_plot(clin.df, var)
 wilc.p+wilc_PD_PR.p+ theme(axis.title.y = element_blank()) + 
   anova.p + theme(axis.title.y = element_blank())
 
-write.table(x = data, file = "/home/l.leek/pembro/results/pembro_stats.csv", 
+write.table(x = data, file = "/home/l.leek/pembro/results/pembro_stats_breast.csv", 
             quote = F, sep = "\t", col.names = T, row.names = T)
-x=fread("/home/l.leek/pembro/results/pembro_stats.csv")
 
+
+
+x=fread("/home/l.leek/pembro/results/pembro_stats_breast.csv", data.table = F)

@@ -1,12 +1,14 @@
 library(patchwork)
 library(data.table)
+library(dplyr)
 #env
 dir = "/home/l.leek/pembro/"
 setwd(dir)
 source("src/functions_plots.R")
 
 
-clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv")
+clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv") %>% 
+    dplyr::filter(TumorType == "Breast cancer" )
 
 
 genes.v = colnames(clin.df)[str_detect(colnames(clin.df),"gene_")]
@@ -21,7 +23,7 @@ for (gene in genes.v){
 }
 colnames(final.df) = c("gene", "fisher", "n_patients_mut")
 
-png("/home/l.leek/pembro/results/fig_mutations.png",width=2000,height=2000, res=300)
+png("/home/l.leek/pembro/results/fig_mutations_breast.png",width=2000,height=2000, res=300)
 ggplot(final.df, aes(x=as.integer(n_patients_mut), y=fisher)) +
   geom_point() + 
   geom_text(

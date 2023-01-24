@@ -20,7 +20,10 @@ GOI = c("PIK3CA", "PTEN", "KRAS", "BRAF", "NRAS", "ARID1A",
              "SMARCB1", "SMARC4A", "PBRM1", "JAK1", "JAK2", "STAT1", 
              "IFNGR1", "IFNGR2","B2M", "TAP1", "TAP2", "TAPB", 
              "CALR", "PDIA3", "CNAX", "HSPA5", "KEAP", "STK11") 
-
+ann.fn = list.files(path = "data/snpeff_output",
+                    pattern = "_ann_filt_oneLine.vcf",
+                    full.names = TRUE,  
+                    recursive = TRUE)
 
 #download data
 cosmicSigs.df = fread(path_cosmicSigs, data.table = F)
@@ -54,12 +57,17 @@ driver_pp.df = my_GOI_driverMut_pp(df = driver.df,
                                    GOI = GOI,
                                    patientIDs = purple.df$patientID)
 
+#Get snpeff annotated genes
+ann.df = my_ann_snpeff(ann.fn, GOI)
+ann_pp.df = my_ann_pp(ann.df, GOI)
+
+
 
 #Merge everything
 merge.df = full_join(x = purple.df, y = clonal.df, by = "patientID")
 merge.df = full_join(x = merge.df, y = cosmicSigs.df, by = c("patientID" = "sample_id"))
 merge.df = full_join(x = merge.df, y = driver_pp.df, by = "patientID")
-
+merge.df = full_join(x = merge.df, y = ann_pp.df, by =  "patientID")
 
 
 write.table(merge.df, file = ("data/pembro_wgs_features.csv"),

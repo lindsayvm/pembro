@@ -195,3 +195,68 @@ my_clonal_dataframe <- function(fn) {
 }
 
 
+
+
+my_ann_snpeff <- function(ann.fn, GOI){
+  #read annotated gene data
+  ls = lapply(ann.fn, function(x) {
+    df = fread(x, data.table = F) %>% 
+      dplyr::rename_with(~ gsub("[*]", "", .x, fixed = TRUE)) %>%
+      dplyr::rename_with(~ gsub("EFF.", "", .x, fixed = TRUE)) %>% 
+      mutate(chrompos = paste0(CHROM,"_", POS)) %>% 
+      filter(GENE %in% GOI)
+    
+    return(df)})
+  #Retrieve IDs
+  names(ls) = gsub("T$|T.$|T..$","",gsub('.*\\/|_ann_filt_oneLine.vcf', "", ann.fn))
+  
+  #concatenate all files
+  #make starting df
+  nrow = 0
+  ncol = ncol(ls[[1]]) +1 # +1 because want to add patientID
+  ann.df = as.data.frame(matrix(rep(NA, ncol * nrow), ncol = ncol, nrow = nrow))
+  colnames(ann.df) = c("patientID",colnames(ls[[1]]))
+  #add info
+  for(i in 1:length(ann.fn)){
+    tmp.df = ls[[i]]
+    if(nrow(tmp.df) != 0){
+      tmp.df = cbind(patientID = names(ls[i]), tmp.df)
+      ann.df = rbind(ann.df, tmp.df)
+    }
+  }
+  return(ann.df)
+}
+
+my_ann_pp <- function(ann.df, GOI){
+  
+  clin.df = data.frame(patientID = unique(ann.df$patientID))
+  #add new cols of each mutation as WT/MUT
+  for (i in GOI){
+    
+    #make new col
+    clin.df$new = rep(0)
+    
+    #select only moderate and high impact genes
+    impact.df = ann.df[ann.df$GENE == i &
+                         ann.df$IMPACT %in% c("MODERATE", "HIGH"), ]
+    mut.id = unique(impact.df$patientID)
+    clin.df$new[clin.df$patientID %in% mut.id] = 1
+    colnames(clin.df)[colnames(clin.df) == "new"] = paste0("gene_snpeff_", i)
+  }
+  return(clin.df)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
