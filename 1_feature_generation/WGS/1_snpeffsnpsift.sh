@@ -8,7 +8,7 @@ java -Xmx4g -jar ~/workspace/snpEff/SnpSift.jar \
     filter "(ANN[*].IMPACT has 'HIGH') || (ANN[*].IMPACT has 'MODERATE') || (ANN[*].EFFECT has 'splice_region_variant')" \
     ~/workspace/snpEff/data/pembro/test_ann.vcf \
     > ~/workspace/snpEff/data/pembro/test_ann_filt.vcf
-cat ~/workspace/snpEff/data/pembro/test_ann_filt.vcf | ~/workspace/SnpEff/scripts/vcfEffOnePerLine.pl | java -jar ~/workspace/snpEff/SnpSift.jar extractFields - CHROM POS REF ALT FILTER AF AC DP MQ "EFF[*].EFFECT" "EFF[*].IMPACT" "EFF[*].FUNCLASS" "EFF[*].CODON" "EFF[*].AA" "EFF[*].AA_LEN" "EFF[*].GENE" "EFF[*].BIOTYPE" "EFF[*].CODING" "EFF[*].TRID" "EFF[*].RANK" > ~/workspace/snpEff/data/pembro/test_ann_filt_oneLine.vcf
+cat ~/workspace/snpEff/data/pembro/test_ann_filt.vcf | ~/workspace/SnpEff/scripts/vcfEffOnePerLine.pl | java -jar ~/workspace/snpEff/SnpSift.jar extractFields - CHROM POS REF ALT FILTER AF AC DP MQ PURPLE_AF SUBCL "EFF[*].EFFECT" "EFF[*].IMPACT" "EFF[*].FUNCLASS" "EFF[*].CODON" "EFF[*].AA" "EFF[*].AA_LEN" "EFF[*].GENE" "EFF[*].BIOTYPE" "EFF[*].CODING" "EFF[*].TRID" "EFF[*].RANK" > ~/workspace/snpEff/data/pembro/test_ann_filt_oneLine.vcf
 
 #All HMF patient (CPCT WIDE)
 for i in $(cat /home/l.leek/pembro/data/pembro_wgs_patientSelection_somatic_CPCTWIDE.txt); do
@@ -21,7 +21,7 @@ for i in $(cat /home/l.leek/pembro/data/pembro_wgs_patientSelection_somatic_CPCT
         /home/l.leek/pembro/data/snpeff_output/${i}_ann.vcf \
         > /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt.vcf
 
-    cat /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt.vcf | ~/workspace/SnpEff/scripts/vcfEffOnePerLine.pl | java -jar ~/workspace/snpEff/SnpSift.jar extractFields - CHROM POS REF ALT FILTER AF AC DP MQ PURPLE_AF "EFF[*].EFFECT" "EFF[*].IMPACT" "EFF[*].FUNCLASS" "EFF[*].CODON" "EFF[*].AA" "EFF[*].AA_LEN" "EFF[*].GENE" "EFF[*].BIOTYPE" "EFF[*].CODING" "EFF[*].TRID" "EFF[*].RANK" > /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt_oneLine.vcf
+    cat /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt.vcf | ~/workspace/SnpEff/scripts/vcfEffOnePerLine.pl | java -jar ~/workspace/snpEff/SnpSift.jar extractFields - CHROM POS REF ALT FILTER AF AC DP MQ PURPLE_AF SUBCL "EFF[*].EFFECT" "EFF[*].IMPACT" "EFF[*].FUNCLASS" "EFF[*].CODON" "EFF[*].AA" "EFF[*].AA_LEN" "EFF[*].GENE" "EFF[*].BIOTYPE" "EFF[*].CODING" "EFF[*].TRID" "EFF[*].RANK" > /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt_oneLine.vcf
 done
 
 #Additional DRUP patients
@@ -35,7 +35,7 @@ for i in $(cat /home/l.leek/pembro/data/pembro_wgs_patientSelection_somatic_DRUP
         /home/l.leek/pembro/data/snpeff_output/${i}_ann.vcf \
         > /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt.vcf
 
-    cat /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt.vcf | ~/workspace/SnpEff/scripts/vcfEffOnePerLine.pl | java -jar ~/workspace/snpEff/SnpSift.jar extractFields - CHROM POS REF ALT FILTER AF AC DP MQ PURPLE_AF "EFF[*].EFFECT" "EFF[*].IMPACT" "EFF[*].FUNCLASS" "EFF[*].CODON" "EFF[*].AA" "EFF[*].AA_LEN" "EFF[*].GENE" "EFF[*].BIOTYPE" "EFF[*].CODING" "EFF[*].TRID" "EFF[*].RANK" > /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt_oneLine.vcf
+    cat /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt.vcf | ~/workspace/SnpEff/scripts/vcfEffOnePerLine.pl | java -jar ~/workspace/snpEff/SnpSift.jar extractFields - CHROM POS REF ALT FILTER AF AC DP MQ PURPLE_AF SUBCL "EFF[*].EFFECT" "EFF[*].IMPACT" "EFF[*].FUNCLASS" "EFF[*].CODON" "EFF[*].AA" "EFF[*].AA_LEN" "EFF[*].GENE" "EFF[*].BIOTYPE" "EFF[*].CODING" "EFF[*].TRID" "EFF[*].RANK" > /home/l.leek/pembro/data/snpeff_output/${i}_ann_filt_oneLine.vcf
 done
 
 

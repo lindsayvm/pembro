@@ -64,10 +64,10 @@ clin.df$HMFsampleID[clin.df$HMFsampleID == "No blood"] = NA
 clin.df$MutationalLoad[clin.df$CPCT_WIDE_CORE == "TSO500" & clin.df$MutationalLoad == 166] = NA# "assumed > 290"
 
 clin.df$Cohort[clin.df$CPCT_WIDE_CORE == "WIDE01010534" & clin.df$MutationalLoad == 274] = "Pembro HML>290" # "274 but >290 according to SNPeff and HMF"
-clin.df$Cohort[clin.df$CPCT_WIDE_CORE == "DRUP01030053" & clin.df$MutationalLoad == 143] = NA # "143 but low (30) according to SNPeff and HMF"
+clin.df$Cohort[clin.df$HMFsampleID == "DRUP01030053" & clin.df$MutationalLoad == 143] = NA # "143 but low (30) according to SNPeff and HMF"
 
 clin.df$MutationalLoad[clin.df$CPCT_WIDE_CORE == "WIDE01010534" & clin.df$MutationalLoad == 274] = NA# "274 but >290 according to SNPeff and HMF"
-clin.df$MutationalLoad[clin.df$CPCT_WIDE_CORE == "DRUP01030053" & clin.df$MutationalLoad == 143] = NA# "143 but low (30) according to SNPeff and HMF"
+clin.df$MutationalLoad[clin.df$HMFsampleID == "DRUP01030053" & clin.df$MutationalLoad == 143] = NA# "143 but low (30) according to SNPeff and HMF"
 
 #When pretreatment biopsy is 0, then the biopsy was still pretreatment but was taken for another study (WIDE/CPCT/COREL). Possibly with another treatment right after biopsy.
 table(clin.df$PretreatmentBiopsy)
@@ -83,6 +83,18 @@ clin.df$responders = ifelse(clin.df$BOR == "PD", "NR", "R")
 #' ###########################################################################
 #' 
 
+hmf.df = fread("/DATA/share/Voesties/data/harmonize/output/drivers-data.csv",data.table = F)  %>%
+  mutate(sampleId = gsub("T$|TII.*","",sampleId))
+
+clin.df$patientID[clin.df$patientID %in% hmf.df$sampleId]
+
+clin.df$patientID = clin.df$HMFsampleID
+#if DRUP ID list (so thohse sequenced in context of DRUP) are not found than NA
+clin.df$patientID[!clin.df$HMFsampleID %in% hmf.df$sampleId] = NA
+#if DRUP ID was not found, use the CPCT_WIDE_CORE
+clin.df$patientID[is.na(clin.df$patientID)] = clin.df$CPCT_WIDE_CORE[is.na(clin.df$patientID)] 
+
 write.table(clin.df, file='data/20221021_DRUP_pembro_LL_final.tsv', 
   quote=TRUE, sep='\t', col.names = T, row.names = F)
+
 

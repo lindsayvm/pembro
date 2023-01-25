@@ -38,8 +38,8 @@ pembro_wgs_clonalTML_fn.df = fread(path_clonalTML_fn, data.table = F)
 purple.df = my_dataframe(fn = pembro_wgs_purple_fn.df, extension = "purple.purity.tsv")
 purple.df = process_purplefiles(df = purple.df)
 
-#Extract information about TML, clonalTML from SNPeff SNPsift tool
-clonal.df = my_clonal_dataframe(fn = pembro_wgs_clonalTML_fn.df)
+# #Extract information about TML, clonalTML from SNPeff SNPsift tool
+# clonal_and_SNPeffTMLTMB.df = my_clonal_dataframe(fn = pembro_wgs_clonalTML_fn.df)
 
 #Extract Cosmic mutational signatures
 #https://www.researchgate.net/figure/Mutational-signatures-of-tumor-samples-Cosmic-mutational-signatures-of-tumor-samples_fig1_336708590
@@ -58,16 +58,17 @@ driver_pp.df = my_GOI_driverMut_pp(df = driver.df,
                                    patientIDs = purple.df$patientID)
 
 #Get snpeff annotated genes
-ann.df = my_ann_snpeff(ann.fn, GOI)
-ann_pp.df = my_ann_pp(ann.df, GOI)
+# ann.df = my_ann_snpeff(ann.fn, GOI)
+# ann_pp.df = my_ann_pp(ann.df, GOI, ann.fn)
 
 
 
 #Merge everything
-merge.df = full_join(x = purple.df, y = clonal.df, by = "patientID")
-merge.df = full_join(x = merge.df, y = cosmicSigs.df, by = c("patientID" = "sample_id"))
+#merge.df = full_join(x = purple.df, y = clonal_and_SNPeffTMLTMB.df, by = "patientID")
+#merge.df = full_join(x = merge.df, y = cosmicSigs.df, by = c("patientID" = "sample_id"))
+merge.df = full_join(x = purple.df, y = cosmicSigs.df, by = c("patientID" = "sample_id"))
 merge.df = full_join(x = merge.df, y = driver_pp.df, by = "patientID")
-merge.df = full_join(x = merge.df, y = ann_pp.df, by =  "patientID")
+#merge.df = full_join(x = merge.df, y = ann_pp.df, by =  "patientID")
 
 
 write.table(merge.df, file = ("data/pembro_wgs_features.csv"),

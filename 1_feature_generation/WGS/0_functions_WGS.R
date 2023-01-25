@@ -146,7 +146,6 @@ read_clonal_vcf_files <- function(fn) {
     df = as.data.frame(getFIX(read.vcfR(x, verbose = FALSE), getINFO = T)) %>% 
       mutate(CHROMPOS = paste0(CHROM, "_", POS)) %>%    #counts as 1 mut
       mutate(SUBCL = gsub(".*;SUBCL=|;.*","",INFO)) %>% #extract subclonality info
-      filter(FILTER == "PASS") %>%                      #filter on quality 
       dplyr::select(CHROMPOS, SUBCL)                    #speed up by rm info
     return(df)})
   
@@ -155,21 +154,33 @@ read_clonal_vcf_files <- function(fn) {
 
 get_TML_cTML <- function(nonsyn.ls, clonal.ls) {
   
-  df = as.data.frame(matrix(rep(NA, 0), nrow = 0, ncol = 3))
-  colnames(df) = c("patientID","TML_SNPeff","cTML")
+  df = as.data.frame(matrix(rep(NA, 0), nrow = 0, ncol = 6))
+  colnames(df) = c("patientID","TML_SNPeff", "TMB_SNPeff_pass_nonsyn_protcoding", "TMB_SNPeff_pass_nonsyn_protcoding_snps", "cTML","perc_clon")
   for(i in names(nonsyn.ls)){
     print(i)
     
     TML = length(unique(nonsyn.ls[[i]]$CHROMPOS))
     
+    TMB.df = nonsyn.ls[[i]] %>% 
+      dplyr::filter(BIOTYPE == "protein_coding")
+    TMB = length(unique(TMB.df$CHROMPOS))
+
+    TMB_snps.df = nonsyn.ls[[i]] %>% 
+      dplyr::filter(BIOTYPE == "protein_coding") %>%  
+      dplyr::filter(EFFECT == "missense_variant")
+    TMB_snps = length(unique(TMB_snps.df$CHROMPOS))
+
     clonal_muts = clonal.ls[[i]]$CHROMPOS[as.numeric(clonal.ls[[i]]$SUBCL) < 0.05]
     clonal_nonsyn.df = nonsyn.ls[[i]] %>% 
       dplyr::filter(CHROMPOS %in% clonal_muts)
     cTML = length(unique(clonal_nonsyn.df$CHROMPOS))
     
+    perc_clon = round((cTML / TML ) * 100,1)
+    
     patientID = gsub("T$|TI$|TI.*$","",i)
     
-    new_row = c(patientID, as.integer(TML), as.integer(cTML))
+    new_row = c(patientID, as.integer(TML), as.integer(TMB), as.integer(TMB_snps),  as.integer(cTML), perc_clon)
+    
     df[nrow(df) + 1, ] = new_row
   }
   return(df)
@@ -181,15 +192,14 @@ my_clonal_dataframe <- function(fn) {
   nonsyn.ls = read_anno_vcf_files(fn$anno)
   names(nonsyn.ls) = fn$names
 
-  print("Extracting clonal information per mutation. This might take a while.")  
+  print("Extracting clonal information per mutation from vcf. This might take a while.")  
   clonal.ls = read_clonal_vcf_files(fn$clonal)
   names(clonal.ls) = fn$names
   
   print("Select clonal nonsyn mutations")
   final.df = get_TML_cTML(nonsyn.ls, clonal.ls)
-  final.df[c("TML_SNPeff", "cTML")] = sapply(final.df[c("TML_SNPeff", "cTML")],as.numeric)
-  final.df$perc_clon = round((final.df$cTML / final.df$TML_SNPeff ) * 100,1)
-  
+  final.df = final.df %>% 
+    mutate_at(vars("TML_SNPeff", "TMB_SNPeff_pass_nonsyn_protcoding", "TMB_SNPeff_pass_nonsyn_protcoding_snps", "cTML", "perc_clon"), as.numeric)
   
   return(final.df)
 }
@@ -227,9 +237,10 @@ my_ann_snpeff <- function(ann.fn, GOI){
   return(ann.df)
 }
 
-my_ann_pp <- function(ann.df, GOI){
+my_ann_pp <- function(ann.df, GOI, ann.fn){
   
-  clin.df = data.frame(patientID = unique(ann.df$patientID))
+  total_pts = gsub("T$|T.$|T..$","",gsub(".*/|_ann_filt_oneLine.vcf","",ann.fn))
+  clin.df = data.frame(patientID = total_pts)
   #add new cols of each mutation as WT/MUT
   for (i in GOI){
     
