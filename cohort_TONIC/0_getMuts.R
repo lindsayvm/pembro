@@ -1,13 +1,42 @@
-library(patchwork)
+#Libraries
 library(data.table)
-#env
-dir = "/home/l.leek/pembro/"
+library(ggplot2)
+library(fastDummies)
+library(vcfR)
+library(stringr)
+library(patchwork)
+
+dir = "/home/l.leek/pembro"
 setwd(dir)
+
+source("src/1_feature_generation/WGS/0_functions_WGS.R")
 source("src/functions_plots.R")
 
+clin.df= fread("~/TONIC/TONIC_decodingfile_LOCKEDFORSHARING.csv")
 
-clin.df = fread("data/20230310_DRUP_pembro_LL_WGS_RNA.tsv") %>% #20221021_DRUP_pembro_LL_WGS_RNA.tsv") %>% 
-  filter(TumorType == "Breast cancer")
+#config
+GOI = c("PIK3CA", "PTEN", "KRAS", "BRAF", "NRAS", "ARID1A",
+        "SMARCB1", "SMARC4A", "PBRM1", "JAK1", "JAK2", "STAT1",
+        "IFNGR1", "IFNGR2","B2M", "TAP1", "TAP2", "TAPB",
+        "CALR", "PDIA3", "CNAX", "HSPA5", "KEAP", "STK11","TP53")
+ann.fn = list.files(path = "~/TONIC/vcf_snpeffsift/",
+                    pattern = "_ann_filt_oneLine.vcf",
+                    full.names = TRUE,  
+                    recursive = TRUE)
+
+#Get snpeff annotated genes
+ann.df = my_ann_snpeff(ann.fn, GOI)
+ann_pp.df = my_ann_pp(ann.df, GOI, ann.fn)
+ann_pp.df$'Identifier DNA tumor baseline (WES)' = paste0("CF",gsub("m2.*CF|_.*","",gsub("_vs_.*","",ann_pp.df$patientID)))
+#There are duplicates with a diff identifier, these are removed. 
+ann_pp.df$`Identifier DNA tumor baseline (WES)`[duplicated(ann_pp.df$`Identifier DNA tumor baseline (WES)`)]
+ann_pp.df$`Identifier DNA tumor baseline (WES)`[str_detect(ann_pp.df$patientID, "5077")] = NA
+
+
+clin.df = dplyr::left_join(clin.df, ann_pp.df, by = "Identifier DNA tumor baseline (WES)")
+clin.df$`Best overall response iRECIST`[clin.df$`Best overall response iRECIST` == "Non CR/non PD (or SD > 24 weeks)"] = NA
+clin.df = clin.df %>% mutate(responders = ifelse(`Best overall response iRECIST` %in% c("PR","CR"), "R","NR"))
+
 
 genes.v = colnames(clin.df)[str_detect(colnames(clin.df),"gene")] #_snpeff
 final.df = as.data.frame(matrix(rep(NA, 3*0), ncol=3))
@@ -56,3 +85,4 @@ swisli_breast.df = clin.df %>%
 table(swisli_breast.df$gene_snpeff_PBRM1, swisli_breast.df$responders)
 table(swisli_breast.df$gene_snpeff_ARID1A, swisli_breast.df$responders)
 #table(swisli_breast.df$gene_snpeff_BRAF, swisli_breast.df$responders)
+

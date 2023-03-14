@@ -86,11 +86,11 @@ clin.df$responders = ifelse(clin.df$BOR == "PD", "NR", "R")
 hmf.df = fread("/DATA/share/Voesties/data/harmonize/output/drivers-data.csv",data.table = F)  %>%
   mutate(sampleId = gsub("T$|TII.*","",sampleId))
 
-clin.df$patientID[clin.df$patientID %in% hmf.df$sampleId]
-
+#generate a new column where the correct WGS IDs will be
 clin.df$patientID = clin.df$HMFsampleID
-#if DRUP ID list (so thohse sequenced in context of DRUP) are not found than NA
-clin.df$patientID[!clin.df$HMFsampleID %in% hmf.df$sampleId] = NA
+#hmf.df holds the IDs for which WGS is avail
+#if DRUP ID list (so those sequenced in context of DRUP) are not found than NA
+clin.df$patientID[!clin.df$patientID %in% hmf.df$sampleId] = NA
 #if DRUP ID was not found, use the CPCT_WIDE_CORE
 clin.df$patientID[is.na(clin.df$patientID)] = clin.df$CPCT_WIDE_CORE[is.na(clin.df$patientID)] 
 

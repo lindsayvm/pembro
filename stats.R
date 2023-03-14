@@ -12,13 +12,14 @@ setwd(dir)
 source("src/functions_plots.R")
 
 
-clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv", data.table = F)
+clin.df = fread("data/20230310_DRUP_pembro_LL_WGS_RNA.tsv", data.table = F) #%>% 
+#  dplyr::filter(TumorType == "Breast cancer")
 
 
 
 names1 = colnames(clin.df)[str_detect(colnames(clin.df),pattern = "rna_|gene|SBS")]
-names2 = c("purity"                    ,                "normFactor"          ,                      "score"    ,                                
- "diploidProportion"         ,                "ploidy"              ,                      "sex"      ,                                
+names2 = c("purity"                    ,     "normFactor"          ,                      "score"    ,                                
+ "diploidProportion"         ,               "ploidy"              ,                      "sex"      ,                                
 "polyclonalProportion" ,                     "minPurity" ,                               
 "maxPurity"                    ,             "minPloidy"                ,                 "maxPloidy"   ,                             
 "minDiploidProportion"          ,            "maxDiploidProportion"   ,                                           
@@ -33,7 +34,7 @@ names2 = c("purity"                    ,                "normFactor"          , 
  "clonal_neo"                  ,              "subclonal_neo"            ,                 "fusion_neo"                      ,         
  "mut_neo"                      ,             "clonal_tmb"                 ,               "subclonal_tmb"                    ,        
  "snvs"                          ,            "indels"                  ,                  "dbs"            ,
- "cTML"                           ,           "perc_clon"                   )     
+ "cTML"                           ,           "perc_clon"     , "aneuploidy_score", "avg_cnv"              )     
 
 variables = c(names2, names1)
 
@@ -52,7 +53,8 @@ for (i in 1:length(variables)){
   varname = variables[i]
   var = clin.df[[varname]]
   
-  #print(table(var))
+  print(varname)
+  
   var_complete = var[!is.na(var)]
   n_tot = length(var_complete)
   
@@ -102,11 +104,17 @@ for (i in 1:length(variables)){
                                      p.adjust.method="none")
     wilcoxon_PDvsPR = signif(wilc.test_PDvsPR$p.value,2)
     
+
     PDvsSD.df = clin.df %>% filter(BOR != "PR")
-    wilc.test_PDvsSD = pairwise.wilcox.test(PDvsSD.df[[varname]], PDvsSD.df$responders,
-                                            p.adjust.method="none")
-    wilcoxon_PDvsSD = signif(wilc.test_PDvsSD$p.value,2)
-    
+    PDvsSD.df = PDvsSD.df %>% dplyr::select(varname, responders)
+    if(unique(PDvsSD.df$responders) == "NR"){
+      wilcoxon_PDvsSD = NA
+    }else{
+      wilc.test_PDvsSD = pairwise.wilcox.test(PDvsSD.df[[varname]], PDvsSD.df$responders,
+                                              p.adjust.method="none")
+      wilcoxon_PDvsSD = signif(wilc.test_PDvsSD$p.value,2)
+    }
+
     aov.test = aov(clin.df[[varname]] ~ BOR, data = clin.df)
     anova_BOR = data.frame(signif(unlist(summary(aov.test))["Pr(>F)1"], 4))[[1]]
     
@@ -118,6 +126,8 @@ for (i in 1:length(variables)){
   rownames(data)[i] = paste0(varname) 
   
 }
+
+#
 
 #many non-responders are breast cancer, and these are mostly women
 table(clin.df$sex, clin.df$responders)

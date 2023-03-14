@@ -41,6 +41,7 @@ process_purplefiles <- function(df){
     dplyr::rename(MSI_bool = msStatus,
                   TML_bool = tmlStatus,
                   TMB_bool = tmbStatus,
+                  sex = gender,
                   TMB = tmbPerMb,
                   TML = tml) 
   
@@ -91,14 +92,14 @@ my_driverMut_pp <- function(df, driverLikelihood_thres){
 
 process_genes_to_dummy <- function(driverMut_pp.df, GOI, patientIDs){
   GOI_driver.df = driverMut_pp.df %>% 
-    filter(gene %in% GOI) %>% 
+    dplyr::filter(gene %in% GOI) %>% 
     mutate(gene = droplevels(gene)) %>% 
     dplyr::select(patientID, gene)
   GOI_dummy_driver.df = dummy_cols(GOI_driver.df, select_columns = "gene")
   GOI_dummy_driver.df = GOI_dummy_driver.df %>% 
     dplyr::select(-gene) %>% 
     group_by(patientID) %>% 
-    summarise(across(everything(), sum))
+    dplyr::summarise(across(everything(), sum))
   
   #add zero for the samples that are sequenced but dont have driver muts
   noDriverMutPatients.v = patientIDs[!patientIDs %in% GOI_dummy_driver.df$patientID]
@@ -125,6 +126,41 @@ my_GOI_driverMut_pp <- function(df, driverLikelihood_thres, GOI, patientIDs){
 
 
 
+my_cnv_pp <- function(df){
+  nrow = 0
+  ncol = 3
+  pp.df = as.data.frame(matrix(rep(NA, ncol * nrow), 
+                               ncol = ncol, 
+                               nrow = nrow))
+  colnames(pp.df) = c("patientID", "avg_cnv", "aneuploidy_score")
+  #add info
+  for (i in unique(df$patientID)){
+    tmp.df = df[df$patientID == i, ]
+    
+    tmp.df = tmp.df %>% 
+      mutate(cnv_len = (end-start)) %>% 
+      mutate(cnv_weights = cnv_len * copyNumber)
+    
+    #average cnv per entire genome
+    avg_cnv = sum(tmp.df$cnv_weights)/sum(tmp.df$cnv_len)
+    
+    #calc per chrom
+    agg_tbl_perChrom = tmp.df %>% group_by(chromosome) %>% 
+      dplyr::summarise(sum_cnv_weights = sum(cnv_weights),
+                       sum_cnv_len = sum(cnv_len),
+                       .groups = 'drop') %>% 
+      mutate(avg_cnv_perChrom = sum_cnv_weights/sum_cnv_len)
+    #sum of average cnv per chrom
+    aneuploidy_score = sum(agg_tbl_perChrom$avg_cnv_perChrom)
+    
+    tmp.df = data.frame(cbind(patientID = i,
+                  avg_cnv = as.numeric(round(avg_cnv,5)),
+                  aneuploidy_score = as.numeric(round(aneuploidy_score,5))))
+    tmp.df[-1] = as.data.frame(lapply(tmp.df[-1],as.numeric))
+    pp.df = rbind(pp.df, tmp.df)
+  }
+  return(pp.df)
+}
 
 
 
@@ -248,8 +284,8 @@ my_ann_pp <- function(ann.df, GOI, ann.fn){
     clin.df$new = rep(0)
     
     #select only moderate and high impact genes
-    impact.df = ann.df[ann.df$GENE == i &
-                         ann.df$IMPACT %in% c("MODERATE", "HIGH"), ]
+    impact.df = ann.df[ann.df$GENE == i ,]
+#                         ann.df$IMPACT %in% c("MODERATE", "HIGH"), ]
     mut.id = unique(impact.df$patientID)
     clin.df$new[clin.df$patientID %in% mut.id] = 1
     colnames(clin.df)[colnames(clin.df) == "new"] = paste0("gene_snpeff_", i)
