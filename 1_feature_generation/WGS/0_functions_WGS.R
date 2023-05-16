@@ -190,8 +190,9 @@ read_clonal_vcf_files <- function(fn) {
 
 get_TML_cTML <- function(nonsyn.ls, clonal.ls) {
   
-  df = as.data.frame(matrix(rep(NA, 0), nrow = 0, ncol = 6))
-  colnames(df) = c("patientID","TML_SNPeff", "TMB_SNPeff_pass_nonsyn_protcoding", "TMB_SNPeff_pass_nonsyn_protcoding_snps", "cTML","perc_clon")
+  df = as.data.frame(matrix(rep(NA, 0), nrow = 0, ncol = 8))
+  colnames(df) = c("patientID","TML_SNPeff", "TMB_SNPeff_pass_nonsyn_protcoding", 
+                   "TMB_SNPeff_pass_nonsyn_protcoding_snps", "cTML","perc_clon", "cTML_05", "perc_clon_05")
   for(i in names(nonsyn.ls)){
     print(i)
     
@@ -206,16 +207,25 @@ get_TML_cTML <- function(nonsyn.ls, clonal.ls) {
       dplyr::filter(EFFECT == "missense_variant")
     TMB_snps = length(unique(TMB_snps.df$CHROMPOS))
 
-    clonal_muts = clonal.ls[[i]]$CHROMPOS[as.numeric(clonal.ls[[i]]$SUBCL) < 0.05]
+    clonal_muts = clonal.ls[[i]]$CHROMPOS[as.numeric(clonal.ls[[i]]$SUBCL) < 0.85]
     clonal_nonsyn.df = nonsyn.ls[[i]] %>% 
       dplyr::filter(CHROMPOS %in% clonal_muts)
     cTML = length(unique(clonal_nonsyn.df$CHROMPOS))
     
     perc_clon = round((cTML / TML ) * 100,1)
+
+    #different cutoff
+    clonal_muts_05 = clonal.ls[[i]]$CHROMPOS[as.numeric(clonal.ls[[i]]$SUBCL) < 0.05]
+    clonal_nonsyn_05.df = nonsyn.ls[[i]] %>% 
+      dplyr::filter(CHROMPOS %in% clonal_muts_05)
+    cTML_05 = length(unique(clonal_nonsyn_05.df$CHROMPOS))
     
+    perc_clon_05 = round((cTML / TML ) * 100,1)
+    
+        
     patientID = gsub("T$|TI$|TI.*$","",i)
     
-    new_row = c(patientID, as.integer(TML), as.integer(TMB), as.integer(TMB_snps),  as.integer(cTML), perc_clon)
+    new_row = c(patientID, as.integer(TML), as.integer(TMB), as.integer(TMB_snps),  as.integer(cTML), perc_clon, cTML_05, perc_clon_05)
     
     df[nrow(df) + 1, ] = new_row
   }
@@ -235,7 +245,7 @@ my_clonal_dataframe <- function(fn) {
   print("Select clonal nonsyn mutations")
   final.df = get_TML_cTML(nonsyn.ls, clonal.ls)
   final.df = final.df %>% 
-    mutate_at(vars("TML_SNPeff", "TMB_SNPeff_pass_nonsyn_protcoding", "TMB_SNPeff_pass_nonsyn_protcoding_snps", "cTML", "perc_clon"), as.numeric)
+    mutate_at(vars("TML_SNPeff", "TMB_SNPeff_pass_nonsyn_protcoding", "TMB_SNPeff_pass_nonsyn_protcoding_snps", "cTML", "perc_clon","cTML_05", "perc_clon_05"), as.numeric)
   
   return(final.df)
 }

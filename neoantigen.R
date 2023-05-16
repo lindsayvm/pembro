@@ -7,8 +7,8 @@ dir = "/home/l.leek/pembro/"
 setwd(dir)
 source("src/functions_plots.R")
 
-
-clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv", data.table = F) #%>% 
+#20221021_DRUP_pembro_LL_WGS_RNA.tsv
+clin.df = fread("data/20230310_DRUP_pembro_LL_WGS_RNA.tsv", data.table = F) #%>% 
 #  filter(TumorType == "Breast cancer")
 
 var = "total_neo"

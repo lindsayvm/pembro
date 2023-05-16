@@ -17,10 +17,11 @@ tmb_cohort140_290.p = my_stacked(df %>% dplyr::filter(Cohort != "Pembro HML>290"
 tmb_cohort290.p = my_stacked(df %>% dplyr::filter(Cohort == "Pembro HML>290"), "TMB_bool") +
   xlab("TMB: Cohort >290")
 
-png("/home/l.leek/pembro/results/fig_TMBhighlow_CB_fisher.png",width=2000,height=800, res=300)
+png("/home/l.leek/pembro/results/fig_TMBhighlow_sanityCheck_CB_barplot.png",width=2000,height=800, res=300)
 tmb_all.p+ylab("# patients")+theme(axis.title.y=element_text(angle = 90))  + tmb_cohort140_290.p + tmb_cohort290.p+theme(legend.position = "right") +
   plot_layout(ncol = 3)
 dev.off()
+#concl: there are not more responders in the the TMB high group
 
 get_fisher_pval(df, "TMB_bool")
 get_fisher_pval(df, "TML_bool") 

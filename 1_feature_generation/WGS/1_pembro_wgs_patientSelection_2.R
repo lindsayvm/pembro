@@ -5,49 +5,31 @@ dir = "/home/l.leek/pembro/"
 setwd(dir)
 
 #clinical file with WGS IDs that are required
-clin.df = fread("data/20221021_DRUP_pembro_LL_final.tsv", data.table = F)
-
-#meta data from HMF with all possible WGS IDs in entire database HMF
-hmf.df = fread("/DATA/share/Voesties/data/harmonize/output/drivers-data.csv",data.table = F)  %>%
-  mutate(sampleId = gsub("T$|TII.*","",sampleId))
-
-#Show IDs that actually can be found back in HMF database: 61 out of 73 have WGS avail
-clin.df$patientID[clin.df$patientID %in% hmf.df$sampleId]
+clin.df = fread("data/20230503_DRUP_pembro_LL_final.tsv", data.table = F) 
+table(clin.df$WGS_avail)
 
 
 select_fn_somatics <- function(extension){
   # Filenames of available PURPLE files (WGS)
+  
+  drup_raw.fn = list.files(path = "/DATA/share/Voesties/data/DRUP/update_6/somatics",
+                           pattern = paste0(extension,"$"),
+                           full.names = T,
+                           recursive = TRUE)
+  drup_raw_names = gsub(".*\\/|\\..*","",drup_raw.fn)
+  drup.id = gsub("T$|TI$|TI.*$","",drup_raw_names)
+  #Those of DRUP we can find in clin
+  drup_pembro.fn = drup_raw.fn[drup.id %in% clin.df$patientID]
+  
   hmf_raw.fn = list.files(path = "/DATA/share/Voesties/data/HMF/update_10/somatics",
                           pattern = paste0(extension,"$"),
                           full.names = TRUE,
                           recursive = TRUE)
   hmf_raw_names = gsub(".*\\/|\\..*","",hmf_raw.fn)
-  hmf.id = gsub("T$|TII.*","",hmf_raw_names)
+  hmf.id = gsub("T$|TI$|TI.*$","",hmf_raw_names)
   #those of HMF we can find in clin
   hmf_pembro.fn = hmf_raw.fn[hmf.id %in% clin.df$patientID]
   
-  #Load DRUP data to find missing samples
-  drup_raw.fn = list.files(path = "/DATA/share/Voesties/data/DRUP/update_3/somatics",
-                           pattern = paste0(extension,"$"),
-                           full.names = T,
-                           recursive = TRUE)
-  drup_raw_names = gsub(".*\\/|\\..*","",drup_raw.fn)
-  drup.id = gsub("T$|TII.*","",drup_raw_names)
-  #Those of DRUP we can find in clin
-  drup_pembro.fn = drup_raw.fn[drup.id %in% clin.df$patientID]
-  
-  
-  ######QUALITY CHECK######
-  # hmf.id = hmf.id[hmf.id %in% clin.df$patientID]
-  # drup.id = drup.id[drup.id %in% clin.df$patientID]
-  # total.id = c(hmf.id, drup.id)
-  # #check whether there are no duplicates found from DRUP and HMF dirs
-  # identical(total.id,unique(total.id))
-  # #patients that cannot be matched to either fn in DRUP in HMF based on patient ID column
-  # #Because PatientID prioritizes HMFsampleID >> CPCT_WIDE_CORE, check whether CPCT_WIDE_CORE can be found
-  # # but that is not the case.
-  # tmp = clin.df[!clin.df$patientID %in% total.id, ]
-  # ######QUALITY CHECK######
   
   #Merge
   ID = c(hmf_pembro.fn, drup_pembro.fn)
@@ -62,16 +44,16 @@ select_fn_somatics <- function(extension){
 }
 
 select_fn_snpeff <- function(extension, extension2){
-  
+  #snpeff_output is generated with 1_snpeffsnpsift.sh using .purple.somatic.vcf.gz files
   clonal = list.files(path = "/home/l.leek/pembro/data/snpeff_output",
-                          pattern = "_ann.vcf",
-                          full.names = TRUE,
-                          recursive = TRUE)
+                      pattern = "_ann.vcf",
+                      full.names = TRUE,
+                      recursive = TRUE)
   
   anno = list.files(path = "/home/l.leek/pembro/data/snpeff_output",
-                  pattern = "_ann_filt_oneLine.vcf",
-                  full.names = TRUE,
-                  recursive = TRUE)
+                    pattern = "_ann_filt_oneLine.vcf",
+                    full.names = TRUE,
+                    recursive = TRUE)
   
   names = gsub(".*\\/|_ann.vcf|_ann_filt_oneLine.vcf", "", clonal)
   final.df = data.frame(cbind(names = names, 

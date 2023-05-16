@@ -25,10 +25,6 @@ clin.df = clin.df %>%
                 Association, Gender, BOR, MutationalLoad, 
                 Start, End, PretreatmentBiopsy, RNA,DNA)  
 
-#metadata
-# dir_DRUP = "/DATA/share/Voesties/data/DRUP/update_3"
-# dir_HMF = "/DATA/share/Voesties/data/HMF/update_10"
-
 #' ###########################################################################
 #' ###########################################################################
 #' Process:  
@@ -73,6 +69,8 @@ clin.df$MutationalLoad[clin.df$HMFsampleID == "DRUP01030053" & clin.df$Mutationa
 table(clin.df$PretreatmentBiopsy)
 
 
+clin.df = clin.df %>%
+  mutate(cohort_manuscript = ifelse(Cohort %in% c("Pembro HML 140-290","Pembro mamma 140-290"), "Pembro 140-290", "Pembro HML>290"))
 
 clin.df$responders = ifelse(clin.df$BOR == "PD", "NR", "R")
 
@@ -87,14 +85,12 @@ hmf.df = fread("/DATA/share/Voesties/data/harmonize/output/drivers-data.csv",dat
   mutate(sampleId = gsub("T$|TII.*","",sampleId))
 
 #generate a new column where the correct WGS IDs will be
-clin.df$patientID = clin.df$HMFsampleID
-#hmf.df holds the IDs for which WGS is avail
-#if DRUP ID list (so those sequenced in context of DRUP) are not found than NA
+clin.df$patientID = clin.df$CPCT_WIDE_CORE
 clin.df$patientID[!clin.df$patientID %in% hmf.df$sampleId] = NA
-#if DRUP ID was not found, use the CPCT_WIDE_CORE
+#if CPCT ID was not found, use the DRUP
 clin.df$patientID[is.na(clin.df$patientID)] = clin.df$CPCT_WIDE_CORE[is.na(clin.df$patientID)] 
 
 write.table(clin.df, file='data/20221021_DRUP_pembro_LL_final.tsv', 
-  quote=TRUE, sep='\t', col.names = T, row.names = F)
+            quote=TRUE, sep='\t', col.names = T, row.names = F)
 
 

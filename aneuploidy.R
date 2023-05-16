@@ -4,51 +4,39 @@
 # acrocentric chromosomes: 13,14,15,21,22 dont have a p
 
 #CENTROMEREN CAN BE FOUND HERE
-fread("/home/l.leek/pembro/data/chrom_arm_locs.xlsx")
-
+#read_excel("/home/l.leek/pembro/data/chrom_arm_locs.xlsx")
 
 # Library
 library(ggplot2)
 library(hrbrthemes)
+source("src/functions_plots.R")
 
-# Create dummy data
-data <- data.frame(
-  cond = rep(c("condition_1", "condition_2"), each=10), 
-  my_x = 1:100 + rnorm(100,sd=9), 
-  my_y = 1:100 + rnorm(100,sd=16) 
-)
+aneuploidy.df = fread("/DATA/share/Voesties/data/harmonize/output/aneuploidy-score.csv") %>% 
+  mutate(patientID = gsub("T$|TI*$","", sampleId))
+clin.df = fread("data/20221021_DRUP_pembro_LL_WGS_RNA.tsv", data.table = F) 
 
-# Basic scatter plot.
-p1 <- ggplot(data, aes(x=my_x, y=my_y)) + 
-  geom_point( color="#69b3a2") +
+final.df = left_join(clin.df, aneuploidy.df, by = c("patientID"))
+
+my_wilcoxon(final.df, "aneuploidyScore")
+ggplot(final.df, aes(x=log2(TMB), y=aneuploidyScore, color=responders)) + 
+  geom_point(size=6) +
   theme_ipsum()
 
-# with linear trend
-p2 <- ggplot(data, aes(x=my_x, y=my_y)) +
-  geom_point() +
-  geom_smooth(method=lm , color="red", se=FALSE) +
+my_wilcoxon(final.df %>% dplyr::filter(TML >= 290), "aneuploidyScore")
+ggplot(final.df %>% dplyr::filter(TML >= 290), aes(x=log2(TMB), y=aneuploidyScore, color=responders)) + 
+  geom_point(size=6) +
   theme_ipsum()
 
-# linear trend + confidence interval
-p3 <- ggplot(data, aes(x=my_x, y=my_y)) +
-  geom_point() +
-  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+my_wilcoxon(final.df %>% dplyr::filter(TML_SNPeff < 290 & TML_SNPeff >= 140 ), "aneuploidyScore")
+ggplot(final.df %>% dplyr::filter(TML_SNPeff < 290 & TML_SNPeff >= 140 ), aes(x=log2(TMB), y=aneuploidyScore, color=responders)) + 
+  geom_point(size=6) +
   theme_ipsum()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+p_breast = my_wilcoxon(final.df %>% dplyr::filter(TumorType == "Breast cancer"), "aneuploidyScore")
+scatter_breast = ggplot(final.df %>% dplyr::filter(TumorType == "Breast cancer"), aes(x=log2(TMB), y=aneuploidyScore, color=responders)) + 
+  geom_point(size=3) +
+  theme_ipsum()
+p_breast+scatter_breast
 
 
 

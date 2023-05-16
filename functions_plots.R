@@ -103,6 +103,41 @@ my_wilcoxon <- function(df, VAR, pval_ypos = max(df[[VAR]], na.rm = T)){
   return(p)
 }  #
 
+
+
+my_wilcoxon2 <- function(df, VAR = VAR, pval_ypos = log2(max(df[[VAR]], na.rm = T))){
+  
+  df$responders = factor(df$responders, levels = c("R","NR"))
+  df = df[!is.na(df[[VAR]]), ]
+  
+  log2Var = log2(df[[VAR]])
+  wilc.test = pairwise.wilcox.test(log2Var, df$responders,
+                                   p.adjust.method="none")
+  pvalue = data.frame(signif(wilc.test$p.value,2))
+  
+  p = df %>%  ggplot( aes(x=responders, 
+                          y=log2Var, 
+                          fill=responders)) +
+    # geom_violin(width=1.4) +
+    geom_boxplot() +
+    scale_fill_manual(values = c("forestgreen", "brown")) +
+    geom_jitter(color="black", size=0.5, alpha=0.3, width = 0.2) +
+    ylab(paste0("Log2", "VAR")) +
+    theme_bw(base_size = 15)+
+    theme(legend.position = "None",
+          #        axis.text.x = element_text(size = 16, angle = 45, vjust = 1.5, hjust=0.5),
+          axis.text.x = element_text(size = 17, angle = 0, vjust = 1, hjust=1),
+          axis.text.y = element_text(size = 12, angle = 0, vjust = 1, hjust=1),
+          axis.title.x = element_blank(),
+          axis.ticks = element_blank()) +
+    geom_text(data = pvalue,
+              aes(x = 1.5, y = pval_ypos, label = paste0("pval_wilc=",pvalue)),  
+              inherit.aes = FALSE, hjust = "inward", vjust = "inward", size = 3.5) +
+    ylim(6.9,12)
+  return(p)
+}  
+
+
 my_wilcoxon_plot2 <- function(df, VAR, pval_ypos = max(df[[VAR]], na.rm = T)){
   
   df$BOR = factor(df$BOR, levels = c("PR","PD"))
